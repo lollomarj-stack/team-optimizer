@@ -1,4 +1,4 @@
-name: Build macOS app
+name: Build macOS and Windows apps
 
 on:
   push:
@@ -38,8 +38,41 @@ jobs:
           cd dist
           zip -r TeamOptimizer-macOS.zip TeamOptimizer.app
 
-      - name: Upload zip artifact
+      - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: TeamOptimizer-macOS
           path: dist/TeamOptimizer-macOS.zip
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build .exe with PyInstaller
+        run: |
+          pyinstaller --windowed --name "TeamOptimizer" --collect-data pulp --add-data "costi_per_grade.csv;." main.py
+
+      - name: Create zip archive for the .exe
+        run: |
+          cd dist
+          powershell Compress-Archive -Path * -DestinationPath TeamOptimizer-Windows.zip
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TeamOptimizer-Windows
+          path: dist/TeamOptimizer-Windows.zip
