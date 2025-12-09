@@ -33,8 +33,13 @@ jobs:
             --add-data "costi_per_grade.csv:." \
             main.py
 
-      - name: Upload .app artifact
+      - name: Create zip archive for the .app
+        run: |
+          cd dist
+          zip -r TeamOptimizer-macOS.zip TeamOptimizer.app
+
+      - name: Upload zip artifact
         uses: actions/upload-artifact@v4
         with:
           name: TeamOptimizer-macOS
-          path: dist/TeamOptimizer.app
+          path: dist/TeamOptimizer-macOS.zip
