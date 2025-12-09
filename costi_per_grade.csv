@@ -1,0 +1,54 @@
+Area;Role;Cost;Bill_Rate
+Cyber;Equity Partner;350;482
+Cyber;Partner;350;482
+Cyber;Director 2;280;411
+Cyber;Director 1;255;357
+Cyber;Senior Manager 3;172.29;316
+Cyber;Senior Manager 1;161.25;316
+Cyber;Manager Q 5;110;309
+Cyber;Manager Q 3;105;295
+Cyber;Manager Q 2;100;268
+Cyber;Senior Consultant 9 CS;59;253
+Cyber;Senior Consultant 7 CS;52;222
+Cyber;Consultant 4;44;207
+Cyber;Consultant 3;40;188
+Cyber;Analyst 5 CS;25;101
+Cyber;Stage;6.4;70
+Specialist;Senior Manager 12;220;367
+Specialist;Manager 15 CS;117;245
+Specialist;Manager 12 CS;105;245
+Specialist;Manager 11 CS;87;224
+Specialist;Manager 10 CS;81;224
+Specialist;Manager 9 CS;77;224
+Specialist;Manager 5 CS;57;219
+Specialist;Manager 4 CS;56;219
+Specialist;Senior Consultant 12 CS;50;204
+Specialist;Senior Consultant 11 CS;48;195
+Specialist;Senior Consultant 10 CS;44;179
+Specialist;Senior Consultant 8 CS;43;158
+Specialist;Senior Consultant 6 CS;42;158
+Specialist;Specialist 2;35;123
+Specialist;Specialist 1;31;118
+Specialist;Analyst 2;27;101
+Specialist;Analyst 1;24;88
+Specialist;Stage;7;0
+DACC;Dedicated - SMGR Contractor 2;49;117
+DACC;Dedicated - Manager Contractor 2;38;98
+DACC;Dedicated - Manager Q Contractor 2;29;78
+DACC;Dedicated - Snr Consultant Contractor 2;24;67
+DACC;Dedicated - Consultant Contractor 2;19;56
+DACC;Dedicated - Analyst Contractor 2;14;42
+DACC;T&M - SMGR Contractor 1;93;200
+DACC;T&M - Manager Contractor 1;54;146
+DACC;T&M - Manager Q Contractor 1;41;116
+DACC;T&M - Snr Consultant Contractor 1;29;96
+DACC;T&M - Consultant Contractor 1;21;84
+DACC;T&M - Analyst Contractor 1;16;70
+NextHub;Senior Manager 1;160;250
+NextHub;Manager 2;75;170
+NextHub;Manager 1;60;160
+NextHub;Senior Consultant 2 CS;49;141
+NextHub;Senior Consultant 1 CS;38;130
+NextHub;Consultant 1 CS;25;80
+NextHub;Analyst 2 CS;21;65
+NextHub;Analyst 1 CS;20;60
