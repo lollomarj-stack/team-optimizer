@@ -7,10 +7,10 @@ on:
 
 jobs:
   # --------------------------------------------------
-  #                   MACOS BUILD (ARM)
+  #                   MACOS BUILD (INTEL)
   # --------------------------------------------------
   build-macos:
-    runs-on: macos-latest   # macOS 15 ARM → perfetto per il tuo MacBook Air M3
+    runs-on: macos-15-intel   # build INTEL → gira su M3 con Rosetta
 
     steps:
       - name: Checkout repository
@@ -30,6 +30,10 @@ jobs:
       - name: Build .app with PyInstaller
         run: |
           pyinstaller --windowed --name "TeamOptimizer" --collect-data pulp main.py
+
+      - name: Ensure CBC solver is executable
+        run: |
+          chmod +x "dist/TeamOptimizer.app/Contents/Frameworks/pulp/solverdir/cbc/osx/i64/cbc" || true
 
       - name: Copy CSV next to the .app bundle
         run: |
