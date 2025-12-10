@@ -7,10 +7,10 @@ on:
 
 jobs:
   # --------------------------------------------------
-  #                   MACOS BUILD
+  #                   MACOS BUILD (ARM)
   # --------------------------------------------------
   build-macos:
-    runs-on: macos-13   # INTEL runner → app compatibile con TUTTI i Mac
+    runs-on: macos-latest   # macOS 15 ARM → perfetto per il tuo MacBook Air M3
 
     steps:
       - name: Checkout repository
@@ -39,7 +39,7 @@ jobs:
         run: |
           cp costi_per_grade.csv dist/
 
-      - name: Create final ZIP (app + csv)
+      - name: Create final ZIP (app + CSV)
         run: |
           cd dist
           zip -r TeamOptimizer-macOS.zip TeamOptimizer.app costi_per_grade.csv
@@ -84,7 +84,7 @@ jobs:
         run: |
           copy costi_per_grade.csv dist\
 
-      - name: Create final ZIP (exe + csv)
+      - name: Create final ZIP (exe + CSV)
         run: |
           cd dist
           powershell Compress-Archive -Path * -DestinationPath TeamOptimizer-Windows.zip
