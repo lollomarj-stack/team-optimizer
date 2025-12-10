@@ -6,8 +6,11 @@ on:
   workflow_dispatch:
 
 jobs:
+  # --------------------------------------------------
+  #                   MACOS BUILD
+  # --------------------------------------------------
   build-macos:
-    runs-on: macos-latest
+    runs-on: macos-13   # INTEL runner → app compatibile con TUTTI i Mac
 
     steps:
       - name: Checkout repository
@@ -30,13 +33,16 @@ jobs:
             --windowed \
             --name "TeamOptimizer" \
             --collect-data pulp \
-            --add-data "costi_per_grade.csv:." \
             main.py
 
-      - name: Create zip archive for the .app
+      - name: Copy CSV next to the .app bundle
+        run: |
+          cp costi_per_grade.csv dist/
+
+      - name: Create final ZIP (app + csv)
         run: |
           cd dist
-          zip -r TeamOptimizer-macOS.zip TeamOptimizer.app
+          zip -r TeamOptimizer-macOS.zip TeamOptimizer.app costi_per_grade.csv
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
@@ -44,6 +50,10 @@ jobs:
           name: TeamOptimizer-macOS
           path: dist/TeamOptimizer-macOS.zip
 
+
+  # --------------------------------------------------
+  #                 WINDOWS BUILD
+  # --------------------------------------------------
   build-windows:
     runs-on: windows-latest
 
@@ -64,9 +74,17 @@ jobs:
 
       - name: Build .exe with PyInstaller
         run: |
-          pyinstaller --windowed --name "TeamOptimizer" --collect-data pulp --add-data "costi_per_grade.csv;." main.py
+          pyinstaller ^
+            --windowed ^
+            --name "TeamOptimizer" ^
+            --collect-data pulp ^
+            main.py
 
-      - name: Create zip archive for the .exe
+      - name: Copy CSV next to .exe
+        run: |
+          copy costi_per_grade.csv dist\
+
+      - name: Create final ZIP (exe + csv)
         run: |
           cd dist
           powershell Compress-Archive -Path * -DestinationPath TeamOptimizer-Windows.zip

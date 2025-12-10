@@ -48,16 +48,29 @@ def parse_percent_no_symbol(text):
 
 def resource_path(relative_path: str) -> str:
     """
-    Restituisce il path del file a partire dalla cartella dell'eseguibile
-    (quando è in exe) oppure dalla cartella corrente (quando è in sviluppo).
+    Restituisce il path del file:
+    - in sviluppo: cartella del sorgente
+    - in eseguibile Windows: cartella del .exe
+    - in eseguibile macOS: cartella del .app
     """
     if getattr(sys, 'frozen', False):
-        # quando è un exe PyInstaller
-        base_path = os.path.dirname(sys.executable)
+        # Stiamo girando come eseguibile PyInstaller
+        exe_path = sys.executable
+
+        if sys.platform == "darwin":
+            # macOS: sys.executable = .../TeamOptimizer.app/Contents/MacOS/TeamOptimizer
+            # Voglio la cartella dove sta il .app:
+            # dirname(dirname(dirname(sys.executable))) -> .../TeamOptimizer.app
+            base_path = os.path.dirname(os.path.dirname(os.path.dirname(exe_path)))
+        else:
+            # Windows (e altri): cartella dell'exe
+            base_path = os.path.dirname(exe_path)
     else:
-        # esecuzione normale da sorgente
-        base_path = os.path.abspath(".")
+        # Esecuzione da sorgente (Python normale)
+        base_path = os.path.abspath(os.path.dirname(__file__))
+
     return os.path.join(base_path, relative_path)
+
 
 
 # ============================================
