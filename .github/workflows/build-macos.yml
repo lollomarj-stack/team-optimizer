@@ -29,11 +29,7 @@ jobs:
 
       - name: Build .app with PyInstaller
         run: |
-          pyinstaller \
-            --windowed \
-            --name "TeamOptimizer" \
-            --collect-data pulp \
-            main.py
+          pyinstaller --windowed --name "TeamOptimizer" --collect-data pulp main.py
 
       - name: Copy CSV next to the .app bundle
         run: |
@@ -74,20 +70,16 @@ jobs:
 
       - name: Build .exe with PyInstaller
         run: |
-          pyinstaller ^
-            --windowed ^
-            --name "TeamOptimizer" ^
-            --collect-data pulp ^
-            main.py
+          pyinstaller --windowed --name "TeamOptimizer" --collect-data pulp main.py
 
       - name: Copy CSV next to .exe
         run: |
-          copy costi_per_grade.csv dist\
+          Copy-Item costi_per_grade.csv dist\
 
       - name: Create final ZIP (exe + CSV)
         run: |
           cd dist
-          powershell Compress-Archive -Path * -DestinationPath TeamOptimizer-Windows.zip
+          Compress-Archive -Path * -DestinationPath TeamOptimizer-Windows.zip
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
