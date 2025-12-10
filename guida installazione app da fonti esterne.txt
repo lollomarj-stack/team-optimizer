@@ -1,0 +1,4 @@
+1-lanciare il "Terminal" sul dispositivo macOS
+2-inserire il comando (richiesta password admin) → sudo spctl --master-disable
+3-In Impostazioni c Privacy e Sicurezza comparirà l’opzione: Consenti app scaricate da
+4-sulla voce "Consenti app scaricate da" selezionare: Dovunque

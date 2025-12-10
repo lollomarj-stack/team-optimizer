@@ -61,7 +61,7 @@ def resource_path(relative_path: str) -> str:
             # macOS: sys.executable = .../TeamOptimizer.app/Contents/MacOS/TeamOptimizer
             # Voglio la cartella dove sta il .app:
             # dirname(dirname(dirname(sys.executable))) -> .../TeamOptimizer.app
-            base_path = os.path.dirname(os.path.dirname(os.path.dirname(exe_path)))
+            base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(exe_path))))
         else:
             # Windows (e altri): cartella dell'exe
             base_path = os.path.dirname(exe_path)
