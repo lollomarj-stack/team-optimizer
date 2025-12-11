@@ -11,6 +11,41 @@ from openpyxl import Workbook  # per export Excel
 
 
 # ============================================
+# FIX PERMESSI CBC (pulp) SU MACOS
+# ============================================
+
+def ensure_cbc_executable():
+    """
+    Su macOS, quando pulp è bundle-ato dentro una .app PyInstaller,
+    può capitare che il binario cbc perda il bit di esecuzione.
+    Qui proviamo a trovarlo e a dare i permessi +x.
+    """
+    try:
+        if sys.platform != "darwin":
+            # Il problema segnalato è solo su macOS, altrove non facciamo nulla
+            return
+
+        pulp_dir = os.path.dirname(pulp.__file__)
+
+        # Pulp di solito mette i solver qui:
+        #   pulp/solverdir/cbc/osx/i64/cbc   (Intel)
+        #   pulp/solverdir/cbc/osx/arm64/cbc (eventuale ARM)
+        candidates = [
+            os.path.join(pulp_dir, "solverdir", "cbc", "osx", "i64", "cbc"),
+            os.path.join(pulp_dir, "solverdir", "cbc", "osx", "arm64", "cbc"),
+        ]
+
+        for path in candidates:
+            if os.path.exists(path):
+                st = os.stat(path)
+                # Aggiunge i bit di esecuzione (x) a quanto già c'è
+                os.chmod(path, st.st_mode | 0o111)
+    except Exception:
+        # Non blocchiamo l'app se qualcosa va storto, ci prova e basta
+        pass
+
+
+# ============================================
 # UTILS FORMATTING
 # ============================================
 
@@ -166,7 +201,11 @@ def run_optimization(figures, min_percents, max_percents, gm_min, discount_max, 
     # obiettivo
     model += 1000 * (GM_diff + Fee_diff) - T
 
-    model.solve(pulp.PULP_CBC_CMD(msg=False))
+    # 🛠️ fix permessi CBC prima di lanciare il solver
+    ensure_cbc_executable()
+
+    solver = pulp.PULP_CBC_CMD(msg=False)
+    model.solve(solver)
 
     # 🔔 Check stato solver
     status = pulp.LpStatus[model.status]
@@ -414,7 +453,7 @@ def start_ui():
     tree.configure(yscrollcommand=tree_scrollbar.set)
 
     # Riga placeholder iniziale
-    tree.insert("", "end", values=("Nessun risultato", "-------"))
+    tree.insert("", "end", values=("Nessun risultato", "        "))
 
     # Riepilogo stile tabella
     info_frame = tk.Frame(right_frame)
@@ -428,7 +467,7 @@ def start_ui():
 
     def new_var():
         # placeholder "lungo" così occupa più o meno lo spazio dei numeri veri
-        return tk.StringVar(value="-----------------------------")
+        return tk.StringVar(value="                                  ")
 
     total_left_var = new_var()
     grossfees_right_var = new_var()
