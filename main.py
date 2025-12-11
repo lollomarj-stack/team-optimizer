@@ -18,27 +18,57 @@ def ensure_cbc_executable():
     """
     Su macOS, quando pulp è bundle-ato dentro una .app PyInstaller,
     può capitare che il binario cbc perda il bit di esecuzione.
-    Qui proviamo a trovarlo e a dare i permessi +x.
+
+    Qui cerchiamo il binario CBC esattamente nella struttura che hai verificato:
+
+        TeamOptimizer.app/Contents/Frameworks/pulp/solverdir/cbc/osx/i64/cbc
+
+    e come fallback usiamo anche pulp.__file__ per trovare solverdir.
     """
+    if sys.platform != "darwin":
+        return
+
     try:
-        if sys.platform != "darwin":
-            # Il problema segnalato è solo su macOS, altrove non facciamo nulla
-            return
+        candidates = []
 
+        # sys.executable = .../TeamOptimizer.app/Contents/MacOS/TeamOptimizer
+        exe_path = sys.executable
+        contents_dir = os.path.abspath(os.path.join(exe_path, "..", ".."))   # .../Contents
+        frameworks_dir = os.path.join(contents_dir, "Frameworks")
+        pulp_from_frameworks = os.path.join(frameworks_dir, "pulp")
+
+        candidates.append(
+            os.path.join(pulp_from_frameworks, "solverdir", "cbc", "osx", "i64", "cbc")
+        )
+        # se un domani ci fosse una build arm64 separata:
+        candidates.append(
+            os.path.join(pulp_from_frameworks, "solverdir", "cbc", "osx", "arm64", "cbc")
+        )
+
+        # 2) Fallback: derivato da pulp.__file__ (per sicurezza)
         pulp_dir = os.path.dirname(pulp.__file__)
+        if os.path.basename(pulp_dir) == "apis":
+            pulp_dir = os.path.dirname(pulp_dir)
 
-        # Pulp di solito mette i solver qui:
-        #   pulp/solverdir/cbc/osx/i64/cbc   (Intel)
-        #   pulp/solverdir/cbc/osx/arm64/cbc (eventuale ARM)
-        candidates = [
-            os.path.join(pulp_dir, "solverdir", "cbc", "osx", "i64", "cbc"),
-            os.path.join(pulp_dir, "solverdir", "cbc", "osx", "arm64", "cbc"),
-        ]
+        candidates.append(
+            os.path.join(pulp_dir, "solverdir", "cbc", "osx", "i64", "cbc")
+        )
+        candidates.append(
+            os.path.join(pulp_dir, "solverdir", "cbc", "osx", "arm64", "cbc")
+        )
 
-        for path in candidates:
+        # Deduplica i percorsi
+        seen = set()
+        unique_candidates = []
+        for c in candidates:
+            if c not in seen:
+                seen.add(c)
+                unique_candidates.append(c)
+
+        # Applica chmod +x a tutti quelli che esistono
+        for path in unique_candidates:
             if os.path.exists(path):
                 st = os.stat(path)
-                # Aggiunge i bit di esecuzione (x) a quanto già c'è
                 os.chmod(path, st.st_mode | 0o111)
     except Exception:
         # Non blocchiamo l'app se qualcosa va storto, ci prova e basta
@@ -453,7 +483,7 @@ def start_ui():
     tree.configure(yscrollcommand=tree_scrollbar.set)
 
     # Riga placeholder iniziale
-    tree.insert("", "end", values=("Nessun risultato", "        "))
+    tree.insert("", "end", values=("Nessun risultato", "            "))
 
     # Riepilogo stile tabella
     info_frame = tk.Frame(right_frame)
@@ -467,7 +497,7 @@ def start_ui():
 
     def new_var():
         # placeholder "lungo" così occupa più o meno lo spazio dei numeri veri
-        return tk.StringVar(value="                                  ")
+        return tk.StringVar(value="                                     ")
 
     total_left_var = new_var()
     grossfees_right_var = new_var()
