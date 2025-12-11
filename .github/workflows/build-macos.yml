@@ -10,7 +10,7 @@ jobs:
   #                   MACOS BUILD (INTEL)
   # --------------------------------------------------
   build-macos:
-    runs-on: macos-15-intel   # build INTEL → gira su M3 con Rosetta
+    runs-on: macos-latest   # build INTEL → gira su M3 con Rosetta
 
     steps:
       - name: Checkout repository
