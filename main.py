@@ -43,7 +43,7 @@ def parse_percent_no_symbol(text):
 
 
 # ============================================
-# PATH RISORSE (CSV accanto all'exe)
+# PATH RISORSE (CSV accanto all'exe / .app)
 # ============================================
 
 def resource_path(relative_path: str) -> str:
@@ -51,17 +51,23 @@ def resource_path(relative_path: str) -> str:
     Restituisce il path del file:
     - in sviluppo: cartella del sorgente
     - in eseguibile Windows: cartella del .exe
-    - in eseguibile macOS: cartella del .app
+    - in eseguibile macOS: cartella che CONTIENE la .app
+      (così il CSV sta accanto alla .app, non dentro)
     """
     if getattr(sys, 'frozen', False):
-        # Stiamo girando come eseguibile PyInstaller
         exe_path = sys.executable
 
         if sys.platform == "darwin":
-            # macOS: sys.executable = .../TeamOptimizer.app/Contents/MacOS/TeamOptimizer
-            # Voglio la cartella dove sta il .app:
-            # dirname(dirname(dirname(sys.executable))) -> .../TeamOptimizer.app
-            base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(exe_path))))
+            # sys.executable = .../TeamOptimizer.app/Contents/MacOS/TeamOptimizer
+            # Risalgo di 4 livelli per arrivare alla cartella che contiene la .app:
+            # MacOS -> Contents -> TeamOptimizer.app -> <cartella>
+            base_path = os.path.dirname(
+                os.path.dirname(
+                    os.path.dirname(
+                        os.path.dirname(exe_path)
+                    )
+                )
+            )
         else:
             # Windows (e altri): cartella dell'exe
             base_path = os.path.dirname(exe_path)
@@ -70,7 +76,6 @@ def resource_path(relative_path: str) -> str:
         base_path = os.path.abspath(os.path.dirname(__file__))
 
     return os.path.join(base_path, relative_path)
-
 
 
 # ============================================
@@ -227,7 +232,7 @@ def start_ui():
 
     root = tk.Tk()
     root.title("Team Optimizer")
-    root.geometry("1260x600")
+    # Nessuna geometry fissa: la calcoliamo dopo aver creato la UI
 
     # --------- STILE BOTTONI MINIMALE / MORBIDO ----------
     style = ttk.Style(root)
@@ -242,6 +247,21 @@ def start_ui():
         "Rounded.TButton",
         relief=[("pressed", "sunken"), ("!pressed", "flat")]
     )
+
+    # Funzione per adattare la finestra al contenuto
+    def adjust_window_to_content():
+        root.update_idletasks()
+        req_w = root.winfo_reqwidth()
+        req_h = root.winfo_reqheight()
+        screen_w = root.winfo_screenwidth()
+        screen_h = root.winfo_screenheight()
+
+        # Limito a una percentuale dello schermo per non sforare
+        width = min(req_w, int(screen_w * 0.95))
+        height = min(req_h, int(screen_h * 0.9))
+
+        root.geometry(f"{width}x{height}")
+        root.minsize(width, height)
 
     # Layout principale
     main_frame = tk.Frame(root)
@@ -303,7 +323,7 @@ def start_ui():
         container = tk.Frame(tab)
         container.pack(fill="both", expand=True)
 
-        canvas = tk.Canvas(container, height=350)
+        canvas = tk.Canvas(container)
         canvas.pack(side="left", fill="both", expand=True)
 
         scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
@@ -377,12 +397,24 @@ def start_ui():
         font=("Arial", 12, "bold")
     ).pack(anchor="w", pady=(0, 10))
 
-    tree = ttk.Treeview(right_frame, columns=("role", "hours"), show="headings", height=10)
+    # Frame + scrollbar per il Treeview
+    tree_frame = tk.Frame(right_frame)
+    tree_frame.pack(fill="both", expand=True, pady=(0, 10))
+
+    tree = ttk.Treeview(tree_frame, columns=("role", "hours"), show="headings")
     tree.heading("role", text="Figura")
     tree.heading("hours", text="Ore")
     tree.column("role", width=260, anchor="w")
     tree.column("hours", width=80, anchor="center")
-    tree.pack(fill="x", pady=(0, 10))
+    tree.pack(side="left", fill="both", expand=True)
+
+    tree_scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
+    tree_scrollbar.pack(side="right", fill="y")
+
+    tree.configure(yscrollcommand=tree_scrollbar.set)
+
+    # Riga placeholder iniziale
+    tree.insert("", "end", values=("Nessun risultato", "-------"))
 
     # Riepilogo stile tabella
     info_frame = tk.Frame(right_frame)
@@ -395,7 +427,8 @@ def start_ui():
     info_frame.grid_columnconfigure(4, weight=0)
 
     def new_var():
-        return tk.StringVar(value="-")
+        # placeholder "lungo" così occupa più o meno lo spazio dei numeri veri
+        return tk.StringVar(value="-----------------------------")
 
     total_left_var = new_var()
     grossfees_right_var = new_var()
@@ -465,6 +498,9 @@ def start_ui():
         discount_right_var.set(pct_fmt(discount_eff))
 
         last_result["data"] = result
+
+        # Dopo aver popolato i risultati, rivaluto lo spazio necessario
+        adjust_window_to_content()
 
     # ===== EXPORT EXCEL =====
 
@@ -555,7 +591,7 @@ def start_ui():
     # ===== SPINNER / LOADER AL POSTO DEL BOTTONE CALCOLA =====
 
     calc_area = ttk.Frame(left_frame)
-    calc_area.pack(pady=10, anchor="center")
+    calc_area.pack(pady=10)
 
     calc_btn = ttk.Button(calc_area, text="Calcola", style="Rounded.TButton")
     calc_btn.pack()  # inizialmente visibile
@@ -611,14 +647,14 @@ def start_ui():
         # recupero input
         try:
             project_value = float(proj_entry.get().replace(",", "."))
-        except:
+        except Exception:
             messagebox.showerror("Errore", "Valore progetto non valido.")
             return
 
         try:
             gm_val = parse_percent_no_symbol(gm_entry.get())
             discount_val = parse_percent_no_symbol(discount_entry.get())
-        except:
+        except Exception:
             messagebox.showerror("Errore", "Valori GM o Discount non validi.")
             return
 
@@ -647,7 +683,7 @@ def start_ui():
             else:
                 try:
                     p_min = parse_percent_no_symbol(min_text)
-                except:
+                except Exception:
                     messagebox.showerror("Errore", f"Min% non valido per {key[0]} - {key[1]}")
                     return
 
@@ -656,7 +692,7 @@ def start_ui():
             else:
                 try:
                     p_max = parse_percent_no_symbol(max_text)
-                except:
+                except Exception:
                     messagebox.showerror("Errore", f"Max% non valido per {key[0]} - {key[1]}")
                     return
 
@@ -678,7 +714,7 @@ def start_ui():
         if total_min_percent > 1.0:
             messagebox.showerror(
                 "Errore",
-                f"La somma dei min% ({total_min_percent*100:.2f}%) supera il 100%."
+                f"La somma dei min% ({total_min_percent * 100:.2f}%) supera il 100%."
             )
             return
 
@@ -698,14 +734,14 @@ def start_ui():
         proc.start()
 
         def poll_queue():
-            proc = current_process.get("proc")
-            q = current_process.get("queue")
+            proc_local = current_process.get("proc")
+            q_local = current_process.get("queue")
 
-            if proc is None or q is None:
+            if proc_local is None or q_local is None:
                 return  # annullato o già gestito
 
-            if not q.empty():
-                status, payload = q.get()
+            if not q_local.empty():
+                status, payload = q_local.get()
                 current_process["proc"] = None
                 current_process["queue"] = None
                 if status == "ok":
@@ -714,7 +750,7 @@ def start_ui():
                     on_calc_finished(None, RuntimeError(payload))
                 return
 
-            if not proc.is_alive():
+            if not proc_local.is_alive():
                 # processo morto senza mettere nulla in coda
                 current_process["proc"] = None
                 current_process["queue"] = None
@@ -726,6 +762,9 @@ def start_ui():
         root.after(100, poll_queue)
 
     calc_btn.config(command=run)
+
+    # ===== PRIMO ADATTAMENTO DELLA FINESTRA AL CONTENUTO DI BASE =====
+    adjust_window_to_content()
 
     root.mainloop()
 
